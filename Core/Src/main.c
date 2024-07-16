@@ -46,6 +46,7 @@
 FDCAN_HandleTypeDef hfdcan3;
 
 TIM_HandleTypeDef htim6;
+TIM_HandleTypeDef htim7;
 
 UART_HandleTypeDef huart2;
 
@@ -88,7 +89,7 @@ volatile float k_p = 7, k_i = 0.5, k_d = 0.0001;
 
 
 float ind[4] = {0, 0, 0 ,0};
-int16_t count=0;
+int16_t count=1;
 
 
 /* USER CODE END PV */
@@ -99,6 +100,7 @@ static void MX_GPIO_Init(void);
 static void MX_FDCAN3_Init(void);
 static void MX_TIM6_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_TIM7_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -108,14 +110,7 @@ static void MX_USART2_UART_Init(void);
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	if(htim == &htim6){
-		if (count == hekichi1) {
-			robomas[R_F-1].trgVel *= -1;
-			robomas[L_B-1].trgVel *= -1;
-		}
-		if (count == hekichi2) {
-			robomas[R_B-1].trgVel *= -1;
-			robomas[L_F-1].trgVel *= -1;
-		}
+
 
 /*
 		robomas[0].trgVel = (int)(-purpose * 36);
@@ -156,6 +151,18 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 			count = 0;
 		}
 		count++;
+	}
+
+	if(htim == &htim7){
+		if (count == -1) {
+			robomas[R_F-1].trgVel *= -1;
+			robomas[L_B-1].trgVel *= -1;
+		}
+		if (count == 1) {
+			robomas[R_B-1].trgVel *= -1;
+			robomas[L_F-1].trgVel *= -1;
+		}
+		count *= -1;
 	}
 }
 
@@ -264,6 +271,7 @@ int main(void)
   MX_FDCAN3_Init();
   MX_TIM6_Init();
   MX_USART2_UART_Init();
+  MX_TIM7_Init();
   /* USER CODE BEGIN 2 */
   printf("start\r\n");
 
@@ -274,6 +282,7 @@ int main(void)
 
   TxHeader.Identifier = 0x200;
   HAL_TIM_Base_Start_IT(&htim6);
+  HAL_TIM_Base_Start_IT(&htim7);
   robomas[R_F-1].trgVel = (int)(32 * 36);
   robomas[R_B-1].trgVel = (int)(32 * 36);
   robomas[L_F-1].trgVel =  (int)(-32 * 36);
@@ -419,6 +428,44 @@ static void MX_TIM6_Init(void)
   /* USER CODE BEGIN TIM6_Init 2 */
 
   /* USER CODE END TIM6_Init 2 */
+
+}
+
+/**
+  * @brief TIM7 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM7_Init(void)
+{
+
+  /* USER CODE BEGIN TIM7_Init 0 */
+
+  /* USER CODE END TIM7_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM7_Init 1 */
+
+  /* USER CODE END TIM7_Init 1 */
+  htim7.Instance = TIM7;
+  htim7.Init.Prescaler = 199;
+  htim7.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim7.Init.Period = 39999;
+  htim7.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim7) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim7, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM7_Init 2 */
+
+  /* USER CODE END TIM7_Init 2 */
 
 }
 
